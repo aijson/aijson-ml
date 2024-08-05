@@ -1,20 +1,14 @@
-schema:
-	python asyncflows/scripts/generate_config_schema.py
-
 type:
-	pyright asyncflows
+	pyright aijson_ml
 
 test:
-	pytest asyncflows
+	pytest aijson_ml
 
 test-no-skip:
 	pytest --disallow-skip
 
 test-fast:
-	pytest -m "not slow" asyncflows
-
-test-config:
-	pytest asyncflows/tests/test_config.py asyncflows/tests/static_typing/test_workflow.py
+	pytest -m "not slow" aijson_ml
 
 lint:
 	ruff check --fix
@@ -22,4 +16,4 @@ lint:
 format:
 	ruff format
 
-all: schema format lint type test-fast
+all: format lint type test-fast
