@@ -19,7 +19,7 @@ from asyncflows.models.io import (
 from asyncflows import StreamingAction, Field
 
 
-from asyncflows.actions.utils.prompt_context import (
+from aijson_ml.utils.prompt_context import (
     RoleElement,
     PromptElement,
     QuoteStyle,

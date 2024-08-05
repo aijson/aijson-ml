@@ -8,7 +8,7 @@ from openai.types.chat import ChatCompletionChunk
 from openai.types.chat.chat_completion_chunk import ChoiceDelta, Choice
 
 from asyncflows.actions.llm import Inputs, Prompt
-from asyncflows.actions.utils.prompt_context import (
+from aijson_ml.utils.prompt_context import (
     TextElement,
     ContextElement,
     RoleElement,
