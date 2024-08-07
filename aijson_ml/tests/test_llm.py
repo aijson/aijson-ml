@@ -7,14 +7,14 @@ import pytest
 from openai.types.chat import ChatCompletionChunk
 from openai.types.chat.chat_completion_chunk import ChoiceDelta, Choice
 
-from asyncflows.actions.llm import Inputs, Prompt
+from aijson_ml.actions.llm import Inputs, Prompt
 from aijson_ml.utils.prompt_context import (
     TextElement,
     ContextElement,
     RoleElement,
     QuoteStyle,
 )
-from asyncflows.models.config.model import ModelConfig
+from aijson.models.config.model import ModelConfig
 
 
 def create_stream_chat_completion(

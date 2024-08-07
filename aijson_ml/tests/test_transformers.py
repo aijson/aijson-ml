@@ -1,6 +1,6 @@
 import pytest
 
-from asyncflows.actions.transformer import (
+from aijson_ml.actions.transformer import (
     Retrieve,
     Rerank,
     RetrieveInputs,

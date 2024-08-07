@@ -13,29 +13,29 @@ from sqlalchemy import Column, Integer, String, create_engine
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-from asyncflows.utils.action_utils import get_actions_dict
-from asyncflows.actions.llm import Outputs as PromptOutputs, Prompt
-from asyncflows.actions.transformer import (
+from aijson.utils.action_utils import get_actions_dict
+from aijson_ml.actions.llm import Outputs as PromptOutputs, Prompt
+from aijson_ml.actions.transformer import (
     BaseTransformerInputs as TransformerInputs,
     Outputs as TransformerOutputs,
     Retrieve,
     Rerank,
 )
-from asyncflows.log_config import configure_logging, get_logger
-from asyncflows.models.blob import Blob
-from asyncflows.models.config.flow import build_hinted_action_config
-from asyncflows.repos.blob_repo import (
+from aijson.log_config import configure_logging, get_logger
+from aijson.models.blob import Blob
+from aijson.models.config.flow import build_hinted_action_config
+from aijson.repos.blob_repo import (
     InMemoryBlobRepo,
     RedisBlobRepo,
     FilesystemBlobRepo,
     S3BlobRepo,
 )
-from asyncflows.repos.cache_repo import ShelveCacheRepo
+from aijson.repos.cache_repo import ShelveCacheRepo
 
 from aioresponses import aioresponses
 
-from asyncflows.services.action_service import ActionService
-from asyncflows.utils.async_utils import LagMonitor
+from aijson.services.action_service import ActionService
+from aijson.utils.async_utils import LagMonitor
 
 _log_history = []
 
@@ -267,7 +267,7 @@ def blocking_func():
 @pytest.fixture(scope="session")
 def testing_actions_type():
     # TODO assert tests not imported before this line
-    import asyncflows.tests.resources.testing_actions  # noqa
+    import aijson.tests.resources.testing_actions  # noqa
 
     testing_action_names = list(get_actions_dict().keys())
 
@@ -278,7 +278,7 @@ def testing_actions_type():
 
 @pytest.fixture()
 def testing_actions(testing_actions_type):
-    with open("asyncflows/tests/resources/testing_actions.yaml") as f:
+    with open("aijson/tests/resources/testing_actions.ai.yaml") as f:
         return testing_actions_type.model_validate(yaml.safe_load(f))
 
 
@@ -385,7 +385,7 @@ def assert_no_errors(log_history):
 @pytest.fixture
 def main_entrypoint_mocked_trace_id(mock_trace_id, discord_entrypoint):
     with mock.patch(
-        "asyncflows.deploy.entrypoint.EntrypointBase.initialize_logger"
+        "aijson.deploy.entrypoint.EntrypointBase.initialize_logger"
     ) as _initialize_logger:
         _initialize_logger.return_value = get_logger().bind(trace_id=mock_trace_id)
         yield discord_entrypoint

@@ -11,12 +11,12 @@ import aiohttp
 import pydantic
 import tenacity
 
-from asyncflows.models.config.action import ActionInvocation
-from asyncflows.models.io import (
+from aijson.models.config.action import ActionInvocation
+from aijson.models.io import (
     DefaultModelInputs,
     DefaultOutputOutputs,
 )
-from asyncflows import StreamingAction, Field
+from aijson import StreamingAction, Field
 
 
 from aijson_ml.utils.prompt_context import (
@@ -25,15 +25,15 @@ from aijson_ml.utils.prompt_context import (
     QuoteStyle,
     TextElement,
 )
-from asyncflows.models.config.model import OptionalModelConfig, ModelConfig
+from aijson.models.config.model import OptionalModelConfig, ModelConfig
 
 import litellm
 
-from asyncflows.models.json_schema import JsonSchemaObject
-from asyncflows.utils.async_utils import Timer, measure_async_iterator
-from asyncflows.utils.json_schema_utils import jsonschema_to_pydantic
-from asyncflows.utils.secret_utils import get_secret
-from asyncflows.utils.singleton_utils import SingletonContext
+from aijson.models.json_schema import JsonSchemaObject
+from aijson.utils.async_utils import Timer, measure_async_iterator
+from aijson.utils.json_schema_utils import jsonschema_to_pydantic
+from aijson.utils.secret_utils import get_secret
+from aijson.utils.singleton_utils import SingletonContext
 
 # for some reason if this is imported later it hangs consistently
 try:
@@ -118,7 +118,7 @@ class Inputs(DefaultModelInputs):
 The prompt to send to the language model.  
 Consists of multiple elements like text, roles, variables, links, and more.
 
-See [prompting in-depth](https://github.com/asynchronous-flows/asyncflows?tab=readme-ov-file#prompting-in-depth) for more information.
+See [prompting in-depth](https://github.com/asynchronous-flows/aijson?tab=readme-ov-file#prompting-in-depth) for more information.
 """,
     )
     output_schema: None | dict[str, JsonSchemaObject] = Field(
@@ -182,7 +182,7 @@ class Prompt(StreamingAction[Inputs, Outputs]):
         cls, action_invocation: ActionInvocation
     ) -> type[Outputs] | None:
         class OutputsWithoutSchema(Outputs):
-            data: None
+            data: None  # pyright: ignore[reportGeneralTypeIssues]
 
         if not hasattr(action_invocation, "output_schema"):
             return OutputsWithoutSchema
@@ -658,7 +658,7 @@ class Prompt(StreamingAction[Inputs, Outputs]):
 
 
 # if __name__ == "__main__":
-#     from asyncflows.tests.utils import run_action_manually
+#     from aijson.tests.utils import run_action_manually
 #
 #     inputs = Inputs(
 #         prompt=PromptConfig(

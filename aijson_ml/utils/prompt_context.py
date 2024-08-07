@@ -6,13 +6,13 @@ from typing_extensions import assert_never
 import structlog.stdlib
 from pydantic import ConfigDict
 
-from asyncflows import Field
-from asyncflows.models.config.common import StrictModel
-from asyncflows.models.config.transform import (
+from aijson import Field
+from aijson.models.config.common import StrictModel
+from aijson.models.config.transform import (
     TransformsInto,
     TransformsFrom,
 )
-from asyncflows.models.config.value_declarations import (
+from aijson.models.config.value_declarations import (
     VarDeclaration,
     TextDeclaration,
     LambdaDeclaration,
@@ -20,7 +20,7 @@ from asyncflows.models.config.value_declarations import (
     LinkDeclaration,
     # ConstDeclaration,
 )
-from asyncflows.models.primitives import TemplateString, HintLiteral
+from aijson.models.primitives import TemplateString, HintLiteral
 
 
 class QuoteStyle(enum.Enum):

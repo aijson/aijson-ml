@@ -1,10 +1,10 @@
 from typing import Any, Literal
 
-from asyncflows import Action, BaseModel
-from asyncflows.models.config.model import BiEncoderModelType, CrossEncoderModelType
+from aijson import Action, BaseModel
+from aijson.models.config.model import BiEncoderModelType, CrossEncoderModelType
 
-# from asyncflows.scripts.run_transformers_service import DocumentQueryRequest
-from asyncflows.utils.transformers_utils import retrieve_indices, rerank_indices
+# from aijson.scripts.run_transformers_service import DocumentQueryRequest
+from aijson_ml.utils.transformers_utils import retrieve_indices, rerank_indices
 
 
 class BaseTransformerInputs(BaseModel):
