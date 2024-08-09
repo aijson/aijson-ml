@@ -510,7 +510,7 @@ class Prompt(StreamingAction[Inputs, Outputs]):
     ) -> AsyncIterator[tuple[str, int | None]]:
         # this function returns (delta, tool_index); when filling functions (currently only via litellm),
         # it returns one argument at a time (incrementing tool_index)
-        if "claude" in model_config.model and schema is None:
+        if model_config.model.startswith("claude") and schema is None:
             iterator = self._invoke_anthropic(
                 messages=messages,
                 model_config=model_config,
