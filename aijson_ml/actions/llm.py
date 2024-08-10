@@ -59,6 +59,16 @@ except ImportError:
     pass
 
 
+litellm_retry_errors = (aiohttp.ClientError,)
+
+try:
+    import openai
+
+    litellm_retry_errors += (openai.OpenAIError,)
+except ImportError:
+    pass
+
+
 class PromptEnvContext(SingletonContext):
     # push anthropic API key into env if not there, and
     # inject the GCP credentials from the base64 encoded environment variable
@@ -432,6 +442,11 @@ class Prompt(StreamingAction[Inputs, Outputs]):
                     if completion is not None:
                         yield completion, None
 
+    @tenacity.retry(
+        wait=tenacity.wait_exponential(multiplier=1, max=10),
+        stop=tenacity.stop_after_attempt(5),
+        retry=tenacity.retry_if_exception_type(litellm_retry_errors),
+    )
     async def _invoke_litellm(
         self,
         messages: list[dict[str, str]],
