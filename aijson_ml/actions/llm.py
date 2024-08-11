@@ -478,7 +478,7 @@ class Prompt(StreamingAction[Inputs, Outputs]):
         client = None
         tool_index = None
         try:
-            if "gpt" in model_config.model:
+            if model_config.model.startswith("gpt"):
                 from openai import AsyncOpenAI
 
                 client = AsyncOpenAI(api_key=openai_api_key)
