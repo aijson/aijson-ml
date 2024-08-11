@@ -444,7 +444,7 @@ class Prompt(StreamingAction[Inputs, Outputs]):
 
     @tenacity.retry(
         wait=tenacity.wait_exponential(multiplier=1, max=10),
-        stop=tenacity.stop_after_attempt(5),
+        stop=tenacity.stop_after_attempt(20),
         retry=tenacity.retry_if_exception_type(litellm_retry_errors),
     )
     async def _invoke_litellm(
