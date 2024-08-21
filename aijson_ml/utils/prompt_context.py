@@ -209,6 +209,19 @@ class ContextVar(PromptContextInConfigBase, VarDeclaration):
     A variable declaration for prompt context in config.
     """
 
+    heading: TemplateString | None = None
+
+    async def transform_from_config(
+        self, log: structlog.stdlib.BoundLogger, context: dict[str, Any]
+    ) -> ContextElement:
+        if self.heading is not None:
+            return await super().transform_from_config(log, context)
+        inferred_heading = self.var.replace(".", " ").replace("_", " ").title()
+        return ContextElement(
+            value=await self.render(context),
+            heading=inferred_heading,
+        )
+
 
 class ContextLink(PromptContextInConfigBase, LinkDeclaration):
     """
