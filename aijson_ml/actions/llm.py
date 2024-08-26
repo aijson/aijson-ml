@@ -461,19 +461,33 @@ class Prompt(StreamingAction[Inputs, Outputs]):
         if model_config.auth_token is not None:
             headers["Authorization"] = f"Bearer {model_config.auth_token}"
 
-        tool_kwargs = {}
+        schema_kwargs = {}
+        use_tool_calling = "gpt" not in model_config.model
         if schema is not None:
-            tool_kwargs["tool_choice"] = "required"
-            tool_kwargs["tools"] = [
-                {
-                    "type": "function",
-                    "function": {
+            json_schema = schema.model_dump(exclude_unset=True)
+            # Use structured data generation for OpenAI,
+            # tool calling otherwise (does not guarantee schema compliance)
+            if not use_tool_calling:
+                schema_kwargs["response_format"] = {
+                    "type": "json_schema",
+                    "json_schema": {
                         "name": "function",
-                        # "description": "Function to be called",
-                        "parameters": schema.model_dump(exclude_unset=True),
+                        "schema": json_schema,
+                        "strict": True,
                     },
                 }
-            ]
+            else:
+                schema_kwargs["tool_choice"] = "required"
+                schema_kwargs["tools"] = [
+                    {
+                        "type": "function",
+                        "function": {
+                            "name": "function",
+                            # "description": "Function to be called",
+                            "parameters": json_schema,
+                        },
+                    }
+                ]
 
         client = None
         tool_index = None
@@ -497,11 +511,11 @@ class Prompt(StreamingAction[Inputs, Outputs]):
                     presence_penalty=model_config.presence_penalty,
                     base_url=model_config.api_base,
                     extra_headers=headers,
-                    **tool_kwargs,
+                    **schema_kwargs,
                     # **model_config.model_dump(),
                 ):
                     delta_obj = completion.choices[0].delta  # type: ignore
-                    if schema is not None:
+                    if schema is not None and use_tool_calling:
                         if delta_obj.tool_calls is not None:
                             tool_call = delta_obj.tool_calls[0]
                             tool_index = tool_call.index
@@ -571,18 +585,25 @@ class Prompt(StreamingAction[Inputs, Outputs]):
         )
 
     def parse_structured_response(
-        self, tool_responses: dict[int, str], schema: dict
+        self, tool_responses: dict[int, str], output: str, schema: dict
     ) -> dict | None:
         data = {}
 
-        try:
-            for tool_response in tool_responses.values():
-                data |= json.loads(tool_response)
-        except json.JSONDecodeError:
-            self.log.exception(
-                "Failed to parse JSON response", tool_responses=tool_responses
-            )
-            return None
+        if tool_responses:
+            try:
+                for tool_response in tool_responses.values():
+                    data |= json.loads(tool_response)
+            except json.JSONDecodeError:
+                self.log.exception(
+                    "Failed to parse JSON response", tool_responses=tool_responses
+                )
+                return None
+        else:
+            try:
+                data = json.loads(output)
+            except json.JSONDecodeError:
+                self.log.exception("Failed to parse JSON response", output=output)
+                return None
 
         model = self.construct_model_from_schema(schema)
         if model is None:
@@ -660,7 +681,9 @@ class Prompt(StreamingAction[Inputs, Outputs]):
 
         # validate and yield final data
         if inputs.output_schema is not None:
-            data = self.parse_structured_response(tool_responses, inputs.output_schema)
+            data = self.parse_structured_response(
+                tool_responses, output, inputs.output_schema
+            )
             if data is None:
                 raise RuntimeError(
                     "Data returned by LLM does not adhere to output schema"
