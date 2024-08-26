@@ -228,6 +228,19 @@ class ContextLink(PromptContextInConfigBase, LinkDeclaration):
     An input declaration for prompt context in config.
     """
 
+    heading: TemplateString | None = None
+
+    async def transform_from_config(
+        self, log: structlog.stdlib.BoundLogger, context: dict[str, Any]
+    ) -> ContextElement:
+        if self.heading is not None:
+            return await super().transform_from_config(log, context)
+        inferred_heading = self.link.replace(".", " ").replace("_", " ").title()
+        return ContextElement(
+            value=await self.render(context),
+            heading=inferred_heading,
+        )
+
 
 class ContextTemplate(PromptContextInConfigBase, TextDeclaration):
     """
