@@ -185,14 +185,28 @@ def mock_wait_for():
 @pytest.fixture
 def mock_tenacity():
     original_retry = tenacity.retry
+    original_retrying = tenacity.Retrying
 
-    def mock_tenacity(wait, **kwargs):
+    def mock_tenacity_retry(wait, **kwargs):
+        if "wait" in kwargs:
+            kwargs.pop("wait")
         return original_retry(
             wait=tenacity.wait_fixed(0),
             **kwargs,
         )
 
-    with patch("tenacity.retry", mock_tenacity):
+    def mock_tenacity_retrying(*args, **kwargs):
+        if "wait" in kwargs:
+            kwargs.pop("wait")
+        return original_retrying(
+            wait=tenacity.wait_fixed(0),
+            **kwargs,
+        )
+
+    with (
+        patch("tenacity.retry", mock_tenacity_retry),
+        patch("tenacity.Retrying", mock_tenacity_retrying),
+    ):
         yield
 
 

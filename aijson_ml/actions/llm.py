@@ -8,6 +8,7 @@ from json import JSONDecodeError
 from typing import Optional, AsyncIterator, Any
 
 import aiohttp
+import openai
 import pydantic
 import tenacity
 
@@ -49,22 +50,15 @@ litellm.drop_params = True
 litellm_logger = logging.getLogger("LiteLLM")
 litellm_logger.setLevel(logging.ERROR)
 
-anthropic_retry_errors = (aiohttp.ClientError,)
+retry_errors = (
+    aiohttp.ClientError,  # connection errors
+    openai.OpenAIError,  # includes litellm errors
+)
 
 try:
     import anthropic
 
-    anthropic_retry_errors += (anthropic.AnthropicError,)
-except ImportError:
-    pass
-
-
-litellm_retry_errors = (aiohttp.ClientError,)
-
-try:
-    import openai
-
-    litellm_retry_errors += (openai.OpenAIError,)
+    retry_errors += (anthropic.AnthropicError,)  # anthropic errors
 except ImportError:
     pass
 
@@ -299,11 +293,6 @@ class Prompt(StreamingAction[Inputs, Outputs]):
 
         return messages
 
-    @tenacity.retry(
-        wait=tenacity.wait_exponential(multiplier=1, max=10),
-        stop=tenacity.stop_after_attempt(5),
-        retry=tenacity.retry_if_exception_type(anthropic_retry_errors),
-    )
     async def _invoke_anthropic(
         self,
         messages: list[dict[str, str]],
@@ -358,11 +347,6 @@ class Prompt(StreamingAction[Inputs, Outputs]):
             async for completion in stream.text_stream:
                 yield completion, None
 
-    @tenacity.retry(
-        wait=tenacity.wait_exponential(multiplier=1, max=10),
-        stop=tenacity.stop_after_attempt(5),
-        retry=tenacity.retry_if_exception_type(aiohttp.ClientError),
-    )
     async def _invoke_ollama(
         self,
         messages: list[dict[str, str]],
@@ -442,11 +426,6 @@ class Prompt(StreamingAction[Inputs, Outputs]):
                     if completion is not None:
                         yield completion, None
 
-    @tenacity.retry(
-        wait=tenacity.wait_exponential(multiplier=1, max=10),
-        stop=tenacity.stop_after_attempt(20),
-        retry=tenacity.retry_if_exception_type(litellm_retry_errors),
-    )
     async def _invoke_litellm(
         self,
         messages: list[dict[str, str]],
@@ -617,6 +596,30 @@ class Prompt(StreamingAction[Inputs, Outputs]):
 
         return data
 
+    async def iterate_invoke_llm(
+        self,
+        messages: list[dict[str, str]],
+        model_config: ModelConfig,
+        schema: None | JsonSchemaObject,
+    ) -> AsyncIterator[tuple[str, dict[int, str], dict | None]]:
+        output = ""
+        tool_responses = defaultdict(str)
+        partial_data = {}
+        async for partial_output, tool_index in self.invoke_llm(
+            messages=messages,
+            model_config=model_config,
+            schema=schema,
+        ):
+            output += partial_output
+            if tool_index is not None:
+                tool_responses[tool_index] += partial_output
+                try:
+                    loaded_output = json.loads(tool_responses[tool_index])
+                    partial_data |= loaded_output
+                except JSONDecodeError:
+                    pass
+            yield output, tool_responses, partial_data
+
     async def run(self, inputs: Inputs) -> AsyncIterator[Outputs]:
         if inputs.model is None:
             resolved_model = inputs._default_model
@@ -641,25 +644,30 @@ class Prompt(StreamingAction[Inputs, Outputs]):
 
         output = ""
         tool_responses = defaultdict(str)
-        partial_data = {}
-        async for partial_output, tool_index in self.invoke_llm(
-            messages=messages,
-            model_config=resolved_model,
-            schema=schema,
+        for attempt in tenacity.Retrying(
+            wait=tenacity.wait_exponential(multiplier=1, max=10),
+            stop=tenacity.stop_after_attempt(5),
+            retry=tenacity.retry_if_exception_type(retry_errors),
+            before_sleep=tenacity.before_sleep_log(
+                self.log,  # pyright: ignore [reportArgumentType]
+                logging.INFO,
+            ),
         ):
-            output += partial_output
-            if tool_index is not None:
-                tool_responses[tool_index] += partial_output
-                try:
-                    loaded_output = json.loads(tool_responses[tool_index])
-                    partial_data |= loaded_output
-                except JSONDecodeError:
-                    pass
-            yield Outputs(
-                result=output,
-                response=output,
-                data=partial_data or None,
-            )
+            with attempt:
+                async for (
+                    output,
+                    tool_responses,
+                    partial_data,
+                ) in self.iterate_invoke_llm(
+                    messages=messages,
+                    model_config=resolved_model,
+                    schema=schema,
+                ):
+                    yield Outputs(
+                        result=output,
+                        response=output,
+                        data=partial_data or None,
+                    )
 
         try:
             estimated_cost_usd = self.estimate_cost(
