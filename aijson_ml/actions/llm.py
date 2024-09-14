@@ -650,7 +650,7 @@ class Prompt(StreamingAction[Inputs, Outputs]):
             retry=tenacity.retry_if_exception_type(retry_errors),
             before_sleep=tenacity.before_sleep_log(
                 self.log,  # pyright: ignore [reportArgumentType]
-                logging.INFO,
+                logging.WARNING,
             ),
         ):
             with attempt:
