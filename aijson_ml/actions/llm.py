@@ -645,8 +645,9 @@ class Prompt(StreamingAction[Inputs, Outputs]):
         output = ""
         tool_responses = defaultdict(str)
         async for attempt in tenacity.AsyncRetrying(
-            wait=tenacity.wait_random_exponential(min=1, max=30),
-            stop=tenacity.stop_after_attempt(10),
+            wait=tenacity.wait_random_exponential(min=1, max=60),
+            # let it timeout via `action_timeout`
+            # stop=tenacity.stop_after_attempt(10),
             retry=tenacity.retry_if_exception_type(retry_errors),
             before_sleep=tenacity.before_sleep_log(
                 self.log,  # pyright: ignore [reportArgumentType]
