@@ -167,6 +167,8 @@ class Prompt(StreamingAction[Inputs, Outputs]):
     Prompt the LLM with a message and receive a response.
     """
 
+    version = 0
+
     @classmethod
     def construct_model_from_schema(cls, schema: dict) -> pydantic.BaseModel | None:
         try:
