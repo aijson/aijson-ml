@@ -341,5 +341,5 @@ async def test_rate_limit_retry(
         assert log_entry == {
             "exc_info": False,
             "event": "Retrying <unknown> in 0.0 seconds as it raised RateLimitError: litellm.RateLimitError: tenacityyyy retry pleaseeee.",
-            "log_level": "info",
+            "log_level": "warning",
         }

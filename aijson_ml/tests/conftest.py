@@ -186,26 +186,34 @@ def mock_wait_for():
 def mock_tenacity():
     original_retry = tenacity.retry
     original_retrying = tenacity.Retrying
+    original_async_retrying = tenacity.AsyncRetrying
 
-    def mock_tenacity_retry(wait, **kwargs):
-        if "wait" in kwargs:
-            kwargs.pop("wait")
+    def _preproc_kwargs(kwargs):
+        kwargs["wait"] = tenacity.wait_fixed(0)
+        kwargs["stop"] = tenacity.stop_after_attempt(5)
+
+    def mock_tenacity_retry(**kwargs):
+        _preproc_kwargs(kwargs)
         return original_retry(
-            wait=tenacity.wait_fixed(0),
             **kwargs,
         )
 
-    def mock_tenacity_retrying(*args, **kwargs):
-        if "wait" in kwargs:
-            kwargs.pop("wait")
+    def mock_tenacity_retrying(**kwargs):
+        _preproc_kwargs(kwargs)
         return original_retrying(
-            wait=tenacity.wait_fixed(0),
+            **kwargs,
+        )
+
+    def mock_tenacity_async_retrying(**kwargs):
+        _preproc_kwargs(kwargs)
+        return original_async_retrying(
             **kwargs,
         )
 
     with (
         patch("tenacity.retry", mock_tenacity_retry),
         patch("tenacity.Retrying", mock_tenacity_retrying),
+        patch("tenacity.AsyncRetrying", mock_tenacity_async_retrying),
     ):
         yield
 
