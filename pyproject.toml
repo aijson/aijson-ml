@@ -31,6 +31,24 @@ api = ["openai", "anthropic", "google-cloud-aiplatform", "boto3"]
 transformers = ["infinity-emb"]
 all = ["openai", "anthropic", "google-cloud-aiplatform", "boto3", "infinity-emb"]
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.3"
+pytest-mock = "^3.12.0"
+pytest-asyncio = "^0.21.1"
+pyright = "1.1.375"
+ruff = "^0.3.0"
+aioresponses = "^0.7.6"
+dash = "^2.14.2"
+dash-cytoscape = "^0.3.0"
+
+[tool.poetry.group.test.dependencies]
+aioresponses = "^0.7.6"
+jsonschema = "^4.21.0"
+jinja2schema = {git = "https://github.com/irgolic/jinja2schema.git", branch = "master"}
+moto = {extras = ["server"], version = "^4.2.13"}
+aiosqlite = "^0.20.0"
+aijson-meta = "^0.1.9"
+mock-firestore-async = "^0.11.3"
 
 [build-system]
 requires = ["poetry-core"]
