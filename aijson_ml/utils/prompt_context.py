@@ -1,5 +1,4 @@
 import enum
-import typing
 from typing import Union, Any, Literal
 from typing_extensions import assert_never
 
@@ -20,7 +19,7 @@ from aijson.models.config.value_declarations import (
     LinkDeclaration,
     # ConstDeclaration,
 )
-from aijson.models.primitives import TemplateString, HintLiteral
+from aijson.models.primitives import TemplateString
 
 
 class QuoteStyle(enum.Enum):
@@ -73,44 +72,8 @@ class ContextElement(PromptElementBase, TransformsFrom):
     heading: str
 
     @classmethod
-    def _get_config_type(
-        cls,
-        vars_: HintLiteral | None,
-        links: HintLiteral | None,
-        strict: bool = False,
-    ) -> type["PromptContextInConfig"]:
-        union_elements = []
-
-        if vars_:
-            union_elements.append(
-                ContextVar.from_hint_literal(vars_, strict),
-            )
-        if not vars_ or not strict:
-            union_elements.append(ContextVar)
-
-        if links:
-            union_elements.append(
-                ContextLink.from_hint_literal(links, strict),
-            )
-        if not links or not strict:
-            union_elements.append(ContextLink)
-
-        other_elements = [
-            element
-            for element in typing.get_args(PromptContextInConfig)
-            if element not in (ContextVar, ContextLink)
-        ]
-        union_elements.extend(other_elements)
-
-        return Union[tuple(union_elements)]  # type: ignore
-
-        # TODO reimplement `strict` parameter
-        # prompt_context_union_members = tuple(
-        #     arg
-        #     for arg in typing.get_args(PromptContextInConfig)
-        #     if arg != PromptContextInConfigVar
-        # )
-        # return Union[HintedPromptContextInConfigVar, *prompt_context_union_members]  # type: ignore
+    def _get_config_type(cls):
+        return PromptContextInConfig
 
     def as_string(
         self,
