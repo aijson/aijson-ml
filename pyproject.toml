@@ -17,6 +17,7 @@ anthropic = { version = "^0.21.3", optional = true }
 google-cloud-aiplatform = { version = "^1.43.0", optional = true }
 boto3 = { version = ">=1.28.57", optional = true }
 types-aioboto3 = {extras = ["s3"], version = "^12.2.0", optional = true }
+fal-client = { version = "^0.5.4", optional = true }
 
 infinity-emb = { version = "^0.0.32", optional = true, extras = ["torch", "optimum"] }
 
@@ -26,10 +27,11 @@ openai = ["openai"]
 anthropic = ["anthropic"]
 gcloud = ["google-cloud-aiplatform"]
 aws = ["aioboto3"]
+fal = ["fal-client"]
 
-api = ["openai", "anthropic", "google-cloud-aiplatform", "boto3"]
+api = ["openai", "anthropic", "google-cloud-aiplatform", "boto3", "fal-client"]
 transformers = ["infinity-emb"]
-all = ["openai", "anthropic", "google-cloud-aiplatform", "boto3", "infinity-emb"]
+all = ["openai", "anthropic", "google-cloud-aiplatform", "boto3", "infinity-emb", "fal-client"]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"
