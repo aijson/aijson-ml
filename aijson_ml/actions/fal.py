@@ -1,7 +1,9 @@
 from aijson import register_action
 
 
-@register_action
+@register_action(
+    cache=False,
+)
 async def fal(
     prompt: str,
     model: str = "fal-ai/flux-pro",
